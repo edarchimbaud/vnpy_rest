@@ -1,7 +1,7 @@
-# 1.0.6版本
+# 1.0.6 Version
 
-1. 修复aiohttp的代理参数proxy传空时必须为None的问题
+1. Fix aiohttp's proxy parameter proxy must be None when passing null.
 
-# 1.0.5版本
+# 1.0.5 Version
 
-1. 对Python 3.10后asyncio的修改支持
+1. Support for asyncio changes after Python 3.10.

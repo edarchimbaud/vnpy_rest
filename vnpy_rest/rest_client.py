@@ -12,16 +12,17 @@ from asyncio import (
     run_coroutine_threadsafe,
     AbstractEventLoop,
     Future,
-    set_event_loop_policy
+    set_event_loop_policy,
 )
 from json import loads
 
 from aiohttp import ClientSession, ClientResponse
 
 
-# 在Windows系统上必须使用Selector事件循环，否则可能导致程序崩溃
-if platform.system() == 'Windows':
+# The Selector event loop must be used on Windows systems, otherwise it may crash the program.
+if platform.system() == "Windows":
     from asyncio import WindowsSelectorEventLoopPolicy
+
     set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
 
@@ -32,17 +33,17 @@ ON_ERROR_TYPE = Callable[[Type, Exception, TracebackType, "Request"], None]
 
 class Request(object):
     """
-    请求对象
+    Request Objects
 
-    method: API的请求方法（GET, POST, PUT, DELETE, QUERY）
-    path: API的请求路径（不包含根地址）
-    callback: 请求成功的回调函数
-    params: 请求表单的参数字典
-    data: 请求主体数据，如果传入字典会被自动转换为json
-    headers: 请求头部的字典
-    on_failed: 请求失败的回调函数
-    on_error: 请求异常的回调函数
-    extra: 任意其他数据（用于回调时获取）
+    method: API request method (GET, POST, PUT, DELETE, QUERY)
+    path: the path of the API request (not including the root address)
+    callback: the callback function for a successful request
+    params: dictionary of parameters for the request form
+    data: the body of the request, if a dictionary is passed in it will be automatically converted to json
+    headers: dictionary of request headers
+    on_failed: callback function for failed requests.
+    on_error: callback function for request exceptions.
+    extra: any other data (for callback)
     """
 
     def __init__(
@@ -72,7 +73,7 @@ class Request(object):
         self.response: "Response" = None
 
     def __str__(self):
-        """字符串表示"""
+        """The string representation"""
         if self.response is None:
             status_code = "terminated"
         else:
@@ -96,8 +97,8 @@ class Request(object):
         )
 
 
-class Response:
-    """结果对象"""
+class Response.
+    """Result object"""
 
     def __init__(self, status_code: int, text: str) -> None:
         """"""
@@ -105,18 +106,18 @@ class Response:
         self.text: str = text
 
     def json(self) -> dict:
-        """获取字符串对应的JSON格式数据"""
+        """Get the JSON data of the string."""
         data = loads(self.text)
         return data
 
 
 class RestClient(object):
     """
-    针对各类RestFul API的异步客户端
+    Asynchronous clients for various RestFul APIs
 
-    * 重载sign方法来实现请求签名逻辑
-    * 重载on_failed方法来实现请求失败的标准回调处理
-    * 重载on_error方法来实现请求异常的标准回调处理
+    * Overload the sign method to implement request signing logic.
+    * Overrides the on_failed method to implement the standard callback handling for request failures.
+    * Overload the on_error method to implement the standard callback for request exceptions.
     """
 
     def __init__(self):
@@ -127,20 +128,15 @@ class RestClient(object):
         self.session: ClientSession = None
         self.loop: AbstractEventLoop = None
 
-    def init(
-        self,
-        url_base: str,
-        proxy_host: str = "",
-        proxy_port: int = 0
-    ) -> None:
-        """传入REST API的根地址，初始化客户端"""
+    def init(self, url_base: str, proxy_host: str = "", proxy_port: int = 0) -> None:
+        """Pass in the root address of the REST API to initialize the client"""
         self.url_base = url_base
 
         if proxy_host and proxy_port:
             self.proxy = f"http://{proxy_host}:{proxy_port}"
 
     def start(self, session_number: int = 3) -> None:
-        """启动客户端的事件循环"""
+        """Starting the client-side event loop"""
         try:
             self.loop = get_running_loop()
         except RuntimeError:
@@ -149,12 +145,12 @@ class RestClient(object):
         start_event_loop(self.loop)
 
     def stop(self) -> None:
-        """停止客户端的事件循环"""
+        """Stop the event loop on the client"""
         if self.loop and self.loop.is_running():
             self.loop.stop()
 
     def join(self) -> None:
-        """等待子线程退出"""
+        """Waiting for child threads to exit"""
         pass
 
     def add_request(
@@ -169,7 +165,7 @@ class RestClient(object):
         on_error: ON_ERROR_TYPE = None,
         extra: Any = None,
     ) -> Request:
-        """添加新的请求任务"""
+        """Add a new request task"""
         request: Request = Request(
             method,
             path,
@@ -194,18 +190,18 @@ class RestClient(object):
         data: dict = None,
         headers: dict = None,
     ) -> Response:
-        """同步请求函数"""
+        """Synchronization request function"""
         request: Request = Request(method, path, params, data, headers)
         coro: coroutine = self._get_response(request)
         fut: Future = run_coroutine_threadsafe(coro, self.loop)
         return fut.result()
 
     def sign(self, request: Request) -> None:
-        """签名函数（由用户继承实现具体签名逻辑）"""
+        """Signature functions (inherited by the user to implement specific signature logic)"""
         return request
 
     def on_failed(self, status_code: int, request: Request) -> None:
-        """请求失败的默认回调"""
+        """Default callback for failed requests"""
         print("RestClient on failed" + "-" * 10)
         print(str(request))
 
@@ -216,7 +212,7 @@ class RestClient(object):
         tb,
         request: Optional[Request],
     ) -> None:
-        """请求触发异常的默认回调"""
+        """The default callback for requesting an exception"""
         try:
             print("RestClient on error" + "-" * 10)
             print(self.exception_detail(exception_type, exception_value, tb, request))
@@ -230,19 +226,17 @@ class RestClient(object):
         tb,
         request: Optional[Request],
     ) -> None:
-        """将异常信息转化生成字符串"""
+        """Convert exception messages into strings"""
         text = "[{}]: Unhandled RestClient Error:{}\n".format(
             datetime.now().isoformat(), exception_type
         )
         text += "request:{}\n".format(request)
         text += "Exception trace: \n"
-        text += "".join(
-            traceback.format_exception(exception_type, exception_value, tb)
-        )
+        text += "".join(traceback.format_exception(exception_type, exception_value, tb))
         return text
 
     async def _get_response(self, request: Request) -> Response:
-        """发送请求到服务器，并返回处理结果对象"""
+        """Sends a request to the server and returns the result object"""
         request = self.sign(request)
         url = self._make_full_url(request.path)
 
@@ -255,7 +249,7 @@ class RestClient(object):
             headers=request.headers,
             params=request.params,
             data=request.data,
-            proxy=self.proxy
+            proxy=self.proxy,
         )
 
         text: str = await cr.text()
@@ -265,40 +259,40 @@ class RestClient(object):
         return request.response
 
     async def _process_request(self, request: Request) -> None:
-        """发送请求到服务器，并对返回进行后续处理"""
+        """Send a request to the server and follow up on the return"""
         try:
             response: Response = await self._get_response(request)
             status_code: int = response.status_code
 
-            # 2xx的代码表示处理成功
+            # A 2xx code indicates successful processing
             if status_code // 100 == 2:
                 request.callback(response.json(), request)
-            # 否则说明处理失败
+            # Otherwise, the process has failed
             else:
-                # 设置了专用失败回调
+                # Specialized failure callbacks are set
                 if request.on_failed:
                     request.on_failed(status_code, request)
-                # 否则使用全局失败回调
+                # Otherwise use the global failure callback
                 else:
                     self.on_failed(status_code, request)
         except Exception:
             t, v, tb = sys.exc_info()
-            # 设置了专用异常回调
+            # Specialized exception callbacks are set
             if request.on_error:
                 request.on_error(t, v, tb, request)
-            # 否则使用全局异常回调
+            # Otherwise use the global exception callback
             else:
                 self.on_error(t, v, tb, request)
 
     def _make_full_url(self, path: str) -> str:
-        """组合根地址生成完整的请求路径"""
+        """Combine root addresses to generate full request paths"""
         url: str = self.url_base + path
         return url
 
 
 def start_event_loop(loop: AbstractEventLoop) -> None:
-    """启动事件循环"""
-    # 如果事件循环未运行，则创建后台线程来运行
+    """Start the event loop"""
+    # If the event loop is not running, create a background thread to run it
     if not loop.is_running():
         thread = Thread(target=run_event_loop, args=(loop,))
         thread.daemon = True
@@ -306,6 +300,6 @@ def start_event_loop(loop: AbstractEventLoop) -> None:
 
 
 def run_event_loop(loop: AbstractEventLoop) -> None:
-    """运行事件循环"""
+    """Running the event loop"""
     set_event_loop(loop)
     loop.run_forever()

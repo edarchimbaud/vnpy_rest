@@ -17,7 +17,7 @@ Concurrent asynchronous REST API client based on asyncio and aiohttp for develop
 
 ## Installation
 
-Installation environment recommended based on version 3.4.0 or above [[**VeighNa Studio**](https://edarchimbaud.com/veighna-website)].
+Installation environment recommended based on version 3.4.0 or above [[**VeighNa Studio**](https://github.com/paperswithbacktest/vnpy)].
 
 Use pip command directly:
 
